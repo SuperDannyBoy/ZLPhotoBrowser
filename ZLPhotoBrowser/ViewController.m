@@ -12,10 +12,7 @@
 #import "ImageCell.h"
 #import "YYFPSLabel.h"
 #import <Photos/Photos.h>
-#import "ZLShowGifViewController.h"
-#import "ZLShowVideoViewController.h"
 #import "ZLPhotoModel.h"
-#import "ZLShowLivePhotoViewController.h"
 
 ///////////////////////////////////////////////////
 // git 地址： https://github.com/longitachi/ZLPhotoBrowser
@@ -34,6 +31,8 @@
 @property (weak, nonatomic) IBOutlet UISwitch *allowForceTouchSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *allowEditSwitch;
 @property (weak, nonatomic) IBOutlet UISwitch *mixSelectSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *editAfterSelectImageSwitch;
+@property (weak, nonatomic) IBOutlet UISwitch *maskSwitch;
 @property (weak, nonatomic) IBOutlet UITextField *previewTextField;
 @property (weak, nonatomic) IBOutlet UITextField *maxSelCountTextField;
 @property (weak, nonatomic) IBOutlet UITextField *cornerRadioTextField;
@@ -43,6 +42,7 @@
 @property (nonatomic, strong) NSMutableArray<PHAsset *> *lastSelectAssets;
 @property (weak, nonatomic) IBOutlet UICollectionView *collectionView;
 @property (nonatomic, strong) NSArray *arrDataSources;
+
 
 @end
 
@@ -103,7 +103,14 @@
     actionSheet.cellCornerRadio = self.cornerRadioTextField.text.floatValue;
     //单选模式是否显示选择按钮
     actionSheet.showSelectBtn = NO;
-    
+    //是否在选择图片后直接进入编辑界面
+    actionSheet.editAfterSelectThumbnailImage = self.editAfterSelectImageSwitch.isOn;
+    //设置编辑比例
+//    actionSheet.clipRatios = @[GetClipRatio(4, 3)];
+    //是否在已选择照片上显示遮罩层
+    actionSheet.showSelectedMask = self.maskSwitch.isOn;
+    //遮罩层颜色
+//    actionSheet.selectedMaskColor = [UIColor orangeColor];
 #pragma required
     //如果调用的方法没有传sender，则该属性必须提前赋值
     actionSheet.sender = self;
@@ -164,6 +171,19 @@
     [[self getPas] previewSelectedPhotos:self.lastSelectPhotos assets:self.lastSelectAssets index:indexPath.row];
 }
 
+- (IBAction)btnPreviewNetImageClick:(id)sender
+{
+    NSArray *arrNetImages = @[[NSURL URLWithString:@"http://pic.962.net/up/2013-11/20131111660842038745.jpg"],
+                              [NSURL URLWithString:@"http://pic.962.net/up/2013-11/20131111660842025734.jpg"],
+                              [NSURL URLWithString:@"http://pic.962.net/up/2013-11/20131111660842029339.jpg"],
+                              [NSURL URLWithString:@"http://pic.962.net/up/2013-11/20131111660842034354.jpg"],
+                              [NSURL URLWithString:@"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1504756336591&di=56a3c8866c95891cbb9c43f907b4f954&imgtype=0&src=http%3A%2F%2Ff5.topitme.com%2F5%2Fa0%2F42%2F111173677859242a05o.jpg"],
+                              [NSURL URLWithString:@"https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1504756368444&di=7e1a2d1fc8aeea41220b1dc56dfc0012&imgtype=0&src=http%3A%2F%2Fimg3.duitang.com%2Fuploads%2Fitem%2F201605%2F10%2F20160510182555_KQ8FH.thumb.700_0.jpeg"]];
+    [[self getPas] previewPhotos:arrNetImages index:0 complete:^(NSArray * _Nonnull photos) {
+        NSLog(@"%@", photos);
+    }];
+}
+
 - (IBAction)valueChanged:(id)sender
 {
     UISwitch *s = (UISwitch *)sender;
@@ -183,9 +203,20 @@
         if (!s.isOn) {
             [self.selImageSwitch setOn:YES animated:YES];
         }
+    } else if (s == self.selLivePhotoSwitch) {
+        if (s.isOn) {
+            [self.selImageSwitch setOn:YES animated:YES];
+        }
+    } else if (s == self.allowEditSwitch) {
+        if (!s.isOn) {
+            [self.editAfterSelectImageSwitch setOn:NO animated:YES];
+        }
+    } else if (s == self.editAfterSelectImageSwitch) {
+        if (s.isOn) {
+            [self.allowEditSwitch setOn:YES animated:YES];
+        }
     }
 }
-
 
 #pragma mark - text field delegate
 - (void)textFieldDidEndEditing:(UITextField *)textField

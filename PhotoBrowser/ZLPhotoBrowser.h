@@ -49,6 +49,12 @@
 /**是否允许编辑图片，选择一张时候才允许编辑，默认YES*/
 @property (nonatomic, assign) BOOL allowEditImage;
 
+/**根据需要设置自身需要的裁剪比例，e.g.:1:1，请使用ZLDefine中所提供方法 GetClipRatio(NSInteger value1, NSInteger value2)，该数组可不设置，有默认比例，为（Custom, 1:1, 4:3, 3:2, 16:9）*/
+@property (nonatomic, strong) NSArray<NSDictionary *> *clipRatios;
+
+/**在小图界面选择图片后直接进入编辑界面，默认NO， 仅在allowEditImage为YES且maxSelectCount为1 的情况下，置为YES有效*/
+@property (nonatomic, assign) BOOL editAfterSelectThumbnailImage;
+
 /**是否在相册内部拍照按钮上面实时显示相机俘获的影像 默认 YES*/
 @property (nonatomic, assign) BOOL showCaptureImageOnTakePhotoBtn;
 
@@ -62,6 +68,15 @@
 @property (nonatomic, assign) BOOL isSelectOriginalPhoto;
 
 @property (nonatomic, copy) NSMutableArray<ZLPhotoModel *> *arrSelectedModels;
+
+/**导航条颜色，默认 rgb(19, 153, 231)*/
+@property (nonatomic, strong) UIColor *navBarColor;
+
+/**是否在已选择的图片上方覆盖一层已选中遮罩层，默认 NO*/
+@property (nonatomic, assign) BOOL showSelectedMask;
+
+/**遮罩层颜色，内部会默认调整颜色的透明度为0.2， 默认 blackColor*/
+@property (nonatomic, strong) UIColor *selectedMaskColor;
 
 /**点击确定选择照片回调*/
 @property (nonatomic, copy) void (^callSelectImageBlock)();

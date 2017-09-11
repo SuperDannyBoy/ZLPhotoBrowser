@@ -39,6 +39,7 @@
 #define ZLPhotoBrowserEditText @"ZLPhotoBrowserEditText"
 #define ZLPhotoBrowserSaveText @"ZLPhotoBrowserSaveText"
 #define ZLPhotoBrowserMaxVideoDurationText @"ZLPhotoBrowserMaxVideoDurationText"
+#define ZLPhotoBrowserLoadNetImageFailed @"ZLPhotoBrowserLoadNetImageFailed"
 
 #define kRGB(r, g, b)   [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1]
 
@@ -63,10 +64,14 @@
 #define kViewHeight     [[UIScreen mainScreen] bounds].size.height
 
 ////////ZLShowBigImgViewController
-#define kItemMargin 50
+#define kItemMargin 40
 
 ///////ZLBigImageCell 不建议设置太大，太大的话会导致图片加载过慢
 #define kMaxImageWidth 500
+
+#define ClippingRatioValue1 @"value1"
+#define ClippingRatioValue2 @"value2"
+#define ClippingRatioTitleFormat @"titleFormat"
 
 static inline void SetViewWidth (UIView *view, CGFloat width) {
     CGRect frame = view.frame;
@@ -151,6 +156,16 @@ static inline NSInteger GetDuration (NSString *duration) {
         d += [arr[i] integerValue] * pow(60, (arr.count-1-i));
     }
     return d;
+}
+
+
+static inline NSDictionary *
+GetCustomClipRatio() {
+    return @{ClippingRatioValue1: @(0), ClippingRatioValue2: @(0), ClippingRatioTitleFormat: @"Custom"};
+}
+
+static inline NSDictionary * GetClipRatio(NSInteger value1, NSInteger value2) {
+    return @{ClippingRatioValue1: @(value1), ClippingRatioValue2: @(value2), ClippingRatioTitleFormat:@"%g : %g"};
 }
 
 #endif /* ZLDefine_h */

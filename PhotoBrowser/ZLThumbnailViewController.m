@@ -16,9 +16,6 @@
 #import "ZLPhotoBrowser.h"
 #import "ToastUtils.h"
 #import "ZLProgressHUD.h"
-#import "ZLShowGifViewController.h"
-#import "ZLShowVideoViewController.h"
-#import "ZLShowLivePhotoViewController.h"
 #import "ZLForceTouchPreviewController.h"
 #import "ZLEditViewController.h"
 
@@ -26,6 +23,11 @@
 {
     BOOL _isLayoutOK;
     BOOL _haveTakePic;
+    
+    //设备旋转前的第一个可视indexPath
+    NSIndexPath *_visibleIndexPath;
+    //是否切换横竖屏
+    BOOL _switchOrientation;
 }
 
 @property (nonatomic, strong) NSMutableArray<ZLPhotoModel *> *arrDataSources;
@@ -79,6 +81,8 @@
     
     [self initNavBtn];
     [self initCollectionView];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationChanged:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -99,12 +103,28 @@
     
     if (!_isLayoutOK) {
         [self scrollToBottom];
+    } else if (_switchOrientation) {
+        _switchOrientation = NO;
+        [self.collectionView scrollToItemAtIndexPath:_visibleIndexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
     }
+}
+
+#pragma mark - 设备旋转
+- (void)deviceOrientationChanged:(NSNotification *)notify
+{
+    CGPoint pInView = [self.view convertPoint:CGPointMake(0, 70) toView:self.collectionView];
+    _visibleIndexPath = [self.collectionView indexPathForItemAtPoint:pInView];
+    _switchOrientation = YES;
 }
 
 - (BOOL)forceTouchAvailable
 {
-    return self.traitCollection.forceTouchCapability == UIForceTouchCapabilityAvailable;
+    //@available(iOS 9.0, *)
+    if ([UIDevice currentDevice].systemVersion.floatValue >= 9.0) {
+        return self.traitCollection.forceTouchCapability == UIForceTouchCapabilityAvailable;
+    } else {
+        return NO;
+    }
 }
 
 - (void)scrollToBottom
@@ -167,7 +187,24 @@
 - (void)initCollectionView
 {
     UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc] init];
-    layout.itemSize = CGSizeMake((kViewWidth-9)/4, (kViewWidth-9)/4);
+    UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+    CGFloat width = .0;
+    if (orientation == UIDeviceOrientationLandscapeLeft ||
+               orientation == UIDeviceOrientationLandscapeRight) {
+        width = kViewHeight;
+    } else {
+        width = kViewWidth;
+    }
+    
+    NSInteger columnCount;
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        columnCount = 6;
+    } else {
+        columnCount = 4;
+    }
+    
+    layout.itemSize = CGSizeMake((width-1.5*columnCount)/columnCount, (width-1.5*columnCount)/columnCount);
     layout.minimumInteritemSpacing = 1.5;
     layout.minimumLineSpacing = 1.5;
     layout.sectionInset = UIEdgeInsetsMake(3, 0, 3, 0);
@@ -344,18 +381,19 @@
                 }
             }
         }
-//        [collectionView reloadItemsAtIndexPaths:[collectionView indexPathsForVisibleItems]];
+        
+        if (weakNav.showSelectedMask) {
+            strongCell.topView.hidden = !model.isSelected;
+        }
         [strongSelf resetBottomBtnsStatus];
     };
-////    cell.isSelectedImage = ^BOOL() {
-////        strongify(weakSelf);
-////        ZLImageNavigationController *nav = (ZLImageNavigationController *)strongSelf.navigationController;
-////        return nav.arrSelectedModels.count > 0;
-////    };
+    
     cell.allSelectGif = nav.allowSelectGif;
     cell.allSelectLivePhoto = nav.allowSelectLivePhoto;
     cell.showSelectBtn = nav.showSelectBtn;
     cell.cornerRadio = nav.cellCornerRadio;
+    cell.showMask = nav.showSelectedMask;
+    cell.maskColor = nav.selectedMaskColor;
     cell.model = model;
 
     return cell;
@@ -386,6 +424,14 @@
         index = indexPath.row - 1;
     }
     ZLPhotoModel *model = self.arrDataSources[index];
+    
+    if (nav.editAfterSelectThumbnailImage &&
+        nav.allowEditImage &&
+        nav.maxSelectCount == 1) {
+        [nav.arrSelectedModels addObject:model];
+        [self btnEdit_Click:nil];
+        return;
+    }
     
     UIViewController *vc = [self getMatchVCWithModel:model];
     if (vc) {

@@ -12,11 +12,13 @@
 #import "ZLPhotoModel.h"
 #import "ZLThumbnailViewController.h"
 #import "ZLDefine.h"
+#import <SDWebImage/SDWebImageManager.h>
 
 @implementation ZLImageNavigationController
 
 - (void)dealloc
 {
+    [[SDWebImageManager sharedManager] cancelAll];
 //    NSLog(@"---- %s", __FUNCTION__);
 }
 
@@ -25,7 +27,6 @@
     self = [super initWithRootViewController:rootViewController];
     if (self) {
         [self.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName: kNavBar_tintColor}];
-        [self.navigationBar setBackgroundImage:[self imageWithColor:kNavBar_color] forBarMetrics:UIBarMetricsDefault];
         [self.navigationBar setTintColor:kNavBar_tintColor];
         self.navigationBar.barStyle = UIBarStyleBlack;
         self.navigationBar.translucent = YES;
@@ -51,6 +52,25 @@
         _arrSelectedModels = [NSMutableArray array];
     }
     return _arrSelectedModels;
+}
+
+- (NSArray<NSDictionary *> *)clipRatios
+{
+    if (_clipRatios) {
+        return _clipRatios;
+    } else {
+        return @[GetCustomClipRatio(),
+                 GetClipRatio(1, 1),
+                 GetClipRatio(4, 3),
+                 GetClipRatio(3, 2),
+                 GetClipRatio(16, 9)];
+    }
+}
+
+- (void)setNavBarColor:(UIColor *)navBarColor
+{
+    _navBarColor = navBarColor?:kNavBar_color;
+    [self.navigationBar setBackgroundImage:[self imageWithColor:_navBarColor] forBarMetrics:UIBarMetricsDefault];
 }
 
 - (void)viewWillAppear:(BOOL)animated
